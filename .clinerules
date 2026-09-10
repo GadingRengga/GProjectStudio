@@ -1,0 +1,31 @@
+# Cline Rules — ERP Web Application
+
+## Read This First, Every Task
+
+1. Always read `docs/README.md` before starting any task. It contains the file index and project context — never skip this.
+2. Based on the task, read ONLY the relevant doc file(s) from the table below. Do not read every file in `docs/` for every task — that defeats the purpose of splitting them.
+
+| If the task involves... | Read this file |
+|---|---|
+| Overall architecture, security layers, folder structure | `docs/ARCHITECTURE.md` |
+| A repository, composable, or auth logic | `docs/DATA-LAYER.md` |
+| A Vue component (atom/molecule/organism), naming a file | `docs/COMPONENTS.md` |
+| SQL, a new table, the audit log | `docs/DATABASE.md` |
+| Writing, reviewing, or testing an RLS policy | `docs/SECURITY-RLS.md` |
+| An Edge Function, backups, or role changes | `docs/EDGE-FUNCTIONS-OPS.md` |
+| `.env`, `netlify.toml`, `vite.config.ts`, `lib/supabase.ts` | `docs/CONFIG.md` |
+| Any code at all — read once per session | `docs/AI-GUIDELINES.md` |
+| Database migration, project phase status | `docs/MIGRATION-ROADMAP.md` |
+
+## Non-Negotiable Rules (apply even before reading the docs)
+
+- **NEVER** import the `supabase` client anywhere outside `src/repositories/supabase/` and `src/lib/supabase.ts`. Full flow: View → composable → Repository (via Interface) → Supabase implementation.
+- **NEVER** put a third-party secret (email API key, payment gateway key, etc.) in a `VITE_*` env var — those are bundled into the public client. Secrets only live in Supabase Edge Functions (`supabase secrets set`).
+- **NEVER** treat frontend permission checks (`usePermission`/`can()`) as real security. The real gate is the database RLS policy. Every sensitive UI gate needs a matching RLS policy — both are required, neither replaces the other.
+- **NEVER** write or change an RLS policy without testing it per role (`admin`, `staff`, `viewer`) before considering the task done — see the testing checklist in `docs/SECURITY-RLS.md`. Never test using the `service_role` key or `postgres` user; both bypass RLS.
+- When something in the docs is ambiguous or a new module doesn't fit the existing patterns cleanly, ask the developer before making assumptions — do not silently improvise a new pattern.
+- When adding a new module, follow the exact step order documented in `docs/DATA-LAYER.md` and `docs/MIGRATION-ROADMAP.md`: Types → Repository Interface → Supabase Implementation → register in `repositories/index.ts` → Composable → Views (List → Detail → Form).
+
+## Before Writing Any Code
+
+Run through the checklist in `docs/AI-GUIDELINES.md` (UI component? DB access? global/local state? TypeScript interface exists? naming convention? permission check needed? secret/rate limiting needed? RLS tested per role?).

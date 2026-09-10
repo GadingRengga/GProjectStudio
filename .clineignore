@@ -1,0 +1,54 @@
+# Dependencies & lockfiles — huge, never needed as context
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build output & caches
+dist/
+dist-ssr/
+.vite/
+.turbo/
+*.local
+
+# Env & secrets — never let Cline read actual secret values
+.env
+.env.*
+!.env.example
+
+# Editor / OS junk
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test coverage & reports
+coverage/
+.nyc_output/
+
+# Supabase local dev artifacts (generated, not source of truth)
+supabase/.branches/
+supabase/.temp/
+
+# Generated TypeScript build info
+*.tsbuildinfo
+
+# Large media/binary assets not needed for code context
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.svg
+*.ico
+*.pdf
+*.zip
+
+# Git internals
+.git/
