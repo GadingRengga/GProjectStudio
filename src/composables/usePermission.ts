@@ -5,7 +5,15 @@
 import { useAuthStore } from '@/stores/auth.store'
 
 type Action = 'create' | 'read' | 'update' | 'delete'
-type Resource = 'customers' | 'services' | 'orders' | 'projects' | 'invoices' | 'transactions'
+type Resource =
+  | 'customers'
+  | 'services'
+  | 'orders'
+  | 'projects'
+  | 'invoices'
+  | 'transactions'
+  | 'organization'
+  | 'company_profile'
 
 // Define what each role can do
 const PERMISSIONS: Record<string, Record<Resource, Action[]>> = {
@@ -16,6 +24,8 @@ const PERMISSIONS: Record<string, Record<Resource, Action[]>> = {
     projects: ['create', 'read', 'update', 'delete'],
     invoices: ['create', 'read', 'update', 'delete'],
     transactions: ['create', 'read', 'update', 'delete'],
+    organization: ['create', 'read', 'update', 'delete'],
+    company_profile: ['read', 'update'],
   },
   staff: {
     customers: ['create', 'read', 'update'],
@@ -24,6 +34,8 @@ const PERMISSIONS: Record<string, Record<Resource, Action[]>> = {
     projects: ['create', 'read', 'update'],
     invoices: ['create', 'read', 'update'],
     transactions: ['read'],
+    organization: ['create', 'read', 'update'],
+    company_profile: ['read'],
   },
   viewer: {
     customers: ['read'],
@@ -32,6 +44,8 @@ const PERMISSIONS: Record<string, Record<Resource, Action[]>> = {
     projects: ['read'],
     invoices: ['read'],
     transactions: [],
+    organization: ['read'],
+    company_profile: ['read'],
   },
 }
 

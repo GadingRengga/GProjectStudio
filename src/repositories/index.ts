@@ -17,9 +17,13 @@
 
 import { SupabaseCustomerRepository } from './supabase/SupabaseCustomerRepository'
 import { SupabaseServiceRepository } from './supabase/SupabaseServiceRepository'
+import { SupabaseOrganizationRepository } from './supabase/SupabaseOrganizationRepository'
 import type { ICustomerRepository } from './interfaces/ICustomerRepository'
 import type { IServiceRepository } from './interfaces/IServiceRepository'
+import type { IOrganizationRepository } from './interfaces/IOrganizationRepository'
 
 // To migrate: replace "new SupabaseXxxRepository()" with "new RestXxxRepository()" etc.
 export const customerRepository: ICustomerRepository = new SupabaseCustomerRepository()
 export const serviceRepository: IServiceRepository = new SupabaseServiceRepository()
+export const organizationRepository: IOrganizationRepository =
+  new SupabaseOrganizationRepository()

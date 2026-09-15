@@ -297,6 +297,13 @@ const menuGroups = [
           { name: "All Services", path: "/services", pro: false },
         ],
       },
+      {
+        icon: UserCircleIcon,
+        name: "Organization",
+        subItems: [
+          { name: "Structure & Profile", path: "/organization", pro: false },
+        ],
+      },
     ],
   },
   {
