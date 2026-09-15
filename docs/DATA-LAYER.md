@@ -368,6 +368,8 @@ export function useCustomer() {
 
 ### Step 7: View — How to Use the Composable (src/views/customer/CustomerListView.vue)
 
+> **UI pattern reminder:** Every View MUST use the canonical skeleton — `AdminLayout` → `PageBreadcrumb` → `space-y-5 sm:space-y-6` → `ComponentCard`. Forms use the canonical input class and `<Button>` component. See **docs/COMPONENTS.md "Theme Components"** for the lookup table and copy-paste-ready classes. Never build custom card wrappers or raw `<button>` elements when the theme component exists.
+
 ```vue
 <!-- src/views/customer/CustomerListView.vue -->
 <!-- View responsibilities: fetch data via composable, render to template, handle navigation -->

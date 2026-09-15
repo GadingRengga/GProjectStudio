@@ -59,15 +59,15 @@ function ensureInitialized(): Promise<void> {
 export function useAuth() {
   const authStore = useAuthStore()
 
-  async function login(email: string, password: string): Promise<boolean> {
+  async function login(email: string, password: string): Promise<string | null> {
     loading.value = true
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) throw error
+      if (error) return error.message
       if (data.user) await syncUser(data.user, authStore)
-      return true
-    } catch {
-      return false
+      return null
+    } catch (err) {
+      return err instanceof Error ? err.message : 'Unexpected login error.'
     } finally {
       loading.value = false
     }

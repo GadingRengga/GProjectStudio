@@ -14,6 +14,147 @@ Question: "Does TailAdmin already have this component?"
   → NO  → Build it in src/components/ following Atomic Design rules below.
 ```
 
+## 🎨 Theme Components — MANDATORY LOOKUP TABLE
+
+**Before writing ANY UI, check this table. If a component already exists, USE IT VERBATIM. Do not recreate.**
+
+| Need | Use this (already exists) | Location | Do NOT build |
+|---|---|---|---|
+| Page shell / layout | `AdminLayout` | `@/components/layout/AdminLayout.vue` | `DashboardLayout` or custom wrapper |
+| Breadcrumb | `PageBreadcrumb` | `@/components/common/PageBreadcrumb.vue` | Manual back button + `<h1>` |
+| Card / panel | `ComponentCard` | `@/components/common/ComponentCard.vue` | Manual `rounded-2xl border...` div |
+| Button | `Button` | `@/components/ui/Button.vue` | Raw `<button class="bg-blue-...">` |
+| Badge / status pill | `AppBadge` | `@/components/atoms/AppBadge.vue` | Custom `<span>` with variant classes |
+| Loading spinner | `AppSpinner` | `@/components/atoms/AppSpinner.vue` | Custom spinner |
+| Summary metric | `MetricCard` | `@/components/molecules/MetricCard.vue` | Custom summary/stat card div |
+| Summary stats (2×2) | `SummaryCard` | `@/components/organisms/SummaryCard.vue` | Custom stats grid inside a card |
+| Trend bar chart | `TrendChart` | `@/components/organisms/TrendChart.vue` | Custom `VueApexCharts` wiring |
+
+### View page skeleton (canonical)
+
+Every module page (List / Detail / Form) MUST follow this exact skeleton:
+
+```vue
+<template>
+  <AdminLayout>
+    <PageBreadcrumb :pageTitle="'Page Title'" />
+    <div class="space-y-5 sm:space-y-6">
+      <ComponentCard title="Card Title">
+        <!-- content here -->
+      </ComponentCard>
+    </div>
+  </AdminLayout>
+</template>
+```
+
+**Never** wrap content in `min-h-screen`, `max-w-[630px]`, `max-w-7xl`, or manual `rounded-2xl border` card divs — `ComponentCard` handles the card, and `space-y-5 sm:space-y-6` handles spacing.
+
+### Sidebar menu rules
+
+- **Only list-index routes get sidebar entries** (e.g. `/customers`, `/services`).
+- **Create/edit routes must NOT appear in the sidebar** (`/customers/new`, `/customers/:id/edit`, `/services/new`, `/services/:id/edit`).
+- The create/edit actions live **inside the feature**: the "Add Customer" button on the list view navigates to the create route; the "Edit" button on the detail view navigates to the edit route.
+- When adding a new module, add only its list route to the sidebar — never the create or edit subItems.
+
+### Minimum feature completeness (per module)
+
+A module is considered **DONE only when ALL 11 elements exist**. Check every box before calling a module finished:
+
+| # | Element | Where it lives |
+|---|---|---|
+| 1 | Main table | `[Module]ListView.vue` + `DataTable` organism |
+| 2 | Create form | `[Module]FormView.vue` on `/[module]/new` |
+| 3 | Edit form | `[Module]FormView.vue` on `/:id/edit` |
+| 4 | Show detail | `[Module]DetailView.vue` |
+| 5 | Create button | "+ Add [Module]" button on the list view (`Button` component) |
+| 6 | Edit button | "Edit" button on the detail view (`Button` component) |
+| 7 | Delete button | "Delete" button on list view rows (`Button` outline variant) |
+| 8 | Filter search | search input in the `DataTable` toolbar (built in) |
+| 9 | Filter sort by | "Sort by" dropdown in the `DataTable` toolbar |
+| 10 | Header summary | `SummaryCard` (2×2 stats) beside the chart in `xl:grid-cols-2` above the main table |
+| 11 | Header chart | `TrendChart` bar chart (12-month trend) beside the summary in `xl:grid-cols-2` above the main table |
+
+For element 9, the View must pass `:sort="{ sortBy, sortDir }"` and `:sort-options="sortOptions"` to `DataTable` and wire `@sort-change="onSortChange"` (which calls `setSort()` from `usePagination` then reloads). The data layer must support it: `PaginationParams` carries `sortBy`/`sortDir` and the repository maps them to `.order(sortBy, { ascending: sortDir === 'asc' })`.
+
+Sort option value format: `'column:dir'` (e.g. `'created_at:desc'`, `'name:asc'`, `'base_price:desc'`). The column must be a real DB column (snake_case).
+
+### ComponentCard API
+
+```vue
+<!-- With title only -->
+<ComponentCard title="Customers">
+  ...content...
+</ComponentCard>
+
+<!-- With title + description -->
+<ComponentCard title="Customers" desc="Manage client data and contacts.">
+  ...content...
+</ComponentCard>
+```
+
+Internally it renders: header (`px-6 py-5` with `text-base font-medium text-gray-800 dark:text-white/90` title + optional `desc`), then body (`p-4 border-t border-gray-100 sm:p-6` with `space-y-5`).
+
+### Button API
+
+```vue
+<!-- Primary action (brand color) -->
+<Button variant="primary" size="sm" @click="save">Save</Button>
+
+<!-- Secondary / outline action -->
+<Button variant="outline" size="sm" @click="cancel">Cancel</Button>
+```
+
+Variants: `primary` (brand-500 solid), `Outline` (gray ring). Sizes: `sm`, `md`. Props: `startIcon`, `endIcon`, `className`, `disabled`.
+
+### Canonical form input class
+
+For every `<input>`, `<select>`, `<textarea>` inside a form, use this exact class (from `DefaultInputs.vue`):
+
+```
+dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800
+```
+
+Textareas use the same class minus `h-11`. Disabled inputs add `disabled:bg-gray-100 dark:disabled:bg-gray-800`.
+
+### Canonical select (with chevron)
+
+```vue
+<div class="relative z-20 bg-transparent">
+  <select
+    v-model="form.type"
+    class="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 pr-11 text-sm text-gray-800 shadow-theme-xs ... dark:focus:border-brand-800"
+  >
+    <option value="a">A</option>
+  </select>
+  <span class="absolute top-1/2 right-4 z-30 -translate-y-1/2 pointer-events-none text-gray-500 dark:text-gray-400">
+    <svg class="stroke-current" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4.79175 7.396L10.0001 12.6043L15.2084 7.396" stroke="" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </span>
+</div>
+```
+
+### Table cell tokens (from BasicTableOne)
+
+| Element | Class |
+|---|---|
+| Header cell | `px-5 py-3 text-left sm:px-6` + `<p class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">` |
+| Body cell | `px-5 py-4 sm:px-6` + `<p class="text-gray-800 text-theme-sm dark:text-white/90">` (primary) or `<p class="text-gray-500 text-theme-sm dark:text-gray-400">` (muted) |
+| Header row | `border-b border-gray-200 dark:border-gray-700` |
+| Body rows | `divide-y divide-gray-100 dark:divide-gray-700`, each row `border-t border-gray-100 dark:border-gray-800` |
+
+### Dark-mode token reference
+
+| Context | Light | Dark |
+|---|---|---|
+| Heading | `text-gray-800` | `dark:text-white/90` |
+| Body / value | `text-gray-800` / `text-theme-sm` | `dark:text-white/90` |
+| Muted / label | `text-gray-500` / `text-theme-xs` | `dark:text-gray-400` |
+| Card surface | `bg-white` | `dark:bg-white/[0.03]` |
+| Border | `border-gray-200` / `border-gray-100` | `dark:border-gray-800` / `dark:border-gray-700` |
+| Input bg | `bg-transparent` | `dark:bg-dark-900` / `dark:bg-gray-900` |
+| Focus ring | `focus:border-brand-300 focus:ring-brand-500/10` | `dark:focus:border-brand-800` |
+
 ### Level Rules
 
 #### ATOM — Smallest indivisible UI unit

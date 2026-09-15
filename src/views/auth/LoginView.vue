@@ -20,12 +20,12 @@ const isSubmitting = computed(() => loading.value)
 
 async function handleSubmit() {
   errorMessage.value = ''
-  const success = await login(email.value.trim(), password.value)
-  if (success) {
+  const loginError = await login(email.value.trim(), password.value)
+  if (loginError === null) {
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
     router.push(redirect)
   } else {
-    errorMessage.value = 'Invalid email or password.'
+    errorMessage.value = loginError
   }
 }
 </script>

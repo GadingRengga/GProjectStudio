@@ -43,6 +43,20 @@ Answer these questions before generating code for any task:
 - Run the query as `admin`, `staff`, and `viewer` and confirm only the expected rows return
 - A policy that "wasn't tested by role" is not considered done
 
+**10. Are you reusing existing theme components? (MANDATORY)**
+- Before writing ANY UI, consult the **Theme Components lookup table** in `docs/COMPONENTS.md`.
+- `AdminLayout`, `PageBreadcrumb`, `ComponentCard`, `Button`, `AppBadge`, `AppSpinner` already exist — use them verbatim. Do not recreate.
+- For inputs, use the canonical input class from `docs/COMPONENTS.md` — never invent your own `border-gray-300 px-3 py-2` styling.
+- For the page skeleton, use the exact `AdminLayout > PageBreadcrumb > space-y-5 > ComponentCard` pattern. Never wrap in `min-h-screen` or `max-w-*`.
+
+**11. Did you confirm with the developer before moving to the next feature?**
+- After finishing one module (e.g. Customer → Service), STOP. Do not auto-advance to the next module (e.g. Order).
+- Ask the developer for explicit confirmation before starting any new feature or module.
+
+**12. Does the module meet the minimum feature completeness standard?**
+- Every module requires ALL 11 elements: main table, create form, edit form, show detail, create button, edit button, delete button, filter search, filter sort by, header summary (`SummaryCard` 2×2 beside chart), header chart (`TrendChart` beside summary).
+- Validate against the checklist in `docs/COMPONENTS.md` "Minimum feature completeness". A module missing any element is not done.
+
 ---
 
 ## 🚫 Anti-Patterns — Never Do These

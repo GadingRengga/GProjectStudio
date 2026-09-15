@@ -280,6 +280,25 @@ const menuGroups = [
       },
     ],
   },
+{
+    title: "ERP Modules",
+    items: [
+      {
+        icon: UserCircleIcon,
+        name: "Customers",
+        subItems: [
+          { name: "All Customers", path: "/customers", pro: false },
+        ],
+      },
+      {
+        icon: ListIcon,
+        name: "Services",
+        subItems: [
+          { name: "All Services", path: "/services", pro: false },
+        ],
+      },
+    ],
+  },
   {
     title: "Others",
     items: [

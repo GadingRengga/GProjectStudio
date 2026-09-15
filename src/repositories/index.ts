@@ -15,4 +15,11 @@
 //   5. composables/use[Module].ts
 //   6. Views (List → Detail → Form)
 
-export {}
+import { SupabaseCustomerRepository } from './supabase/SupabaseCustomerRepository'
+import { SupabaseServiceRepository } from './supabase/SupabaseServiceRepository'
+import type { ICustomerRepository } from './interfaces/ICustomerRepository'
+import type { IServiceRepository } from './interfaces/IServiceRepository'
+
+// To migrate: replace "new SupabaseXxxRepository()" with "new RestXxxRepository()" etc.
+export const customerRepository: ICustomerRepository = new SupabaseCustomerRepository()
+export const serviceRepository: IServiceRepository = new SupabaseServiceRepository()

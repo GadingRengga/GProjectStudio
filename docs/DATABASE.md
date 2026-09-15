@@ -219,17 +219,39 @@ CREATE POLICY "audit_logs_insert" ON audit_logs FOR INSERT TO authenticated
 -- ============================================================
 CREATE OR REPLACE FUNCTION fn_audit_log()
 RETURNS TRIGGER AS $$
+DECLARE
+  v_record_id UUID;
 BEGIN
+  -- Generic PK lookup: most tables use "id", but user_roles uses "user_id".
+  -- to_jsonb() field access returns NULL (not an error) for missing keys,
+  -- unlike direct NEW.id / OLD.id access which raises 42703.
+  IF TG_OP = 'DELETE' THEN
+    v_record_id := COALESCE(
+      (to_jsonb(OLD) ->> 'id')::uuid,
+      (to_jsonb(OLD) ->> 'user_id')::uuid
+    );
+  ELSE
+    v_record_id := COALESCE(
+      (to_jsonb(NEW) ->> 'id')::uuid,
+      (to_jsonb(NEW) ->> 'user_id')::uuid
+    );
+  END IF;
+
   INSERT INTO audit_logs (table_name, record_id, action, old_data, new_data, user_id)
   VALUES (
     TG_TABLE_NAME,
-    COALESCE(NEW.id, OLD.id),
+    v_record_id,
     TG_OP,
     CASE WHEN TG_OP != 'INSERT' THEN to_jsonb(OLD) END,
     CASE WHEN TG_OP != 'DELETE' THEN to_jsonb(NEW) END,
     auth.uid()
   );
-  RETURN COALESCE(NEW, OLD);
+
+  IF TG_OP = 'DELETE' THEN
+    RETURN OLD;
+  ELSE
+    RETURN NEW;
+  END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
