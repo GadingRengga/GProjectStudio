@@ -18,12 +18,18 @@
 import { SupabaseCustomerRepository } from './supabase/SupabaseCustomerRepository'
 import { SupabaseServiceRepository } from './supabase/SupabaseServiceRepository'
 import { SupabaseOrganizationRepository } from './supabase/SupabaseOrganizationRepository'
+import { SupabaseUserRepository } from './supabase/SupabaseUserRepository'
+import { SupabaseMenuRepository } from './supabase/SupabaseMenuRepository'
 import type { ICustomerRepository } from './interfaces/ICustomerRepository'
 import type { IServiceRepository } from './interfaces/IServiceRepository'
 import type { IOrganizationRepository } from './interfaces/IOrganizationRepository'
+import type { IUserRepository } from './interfaces/IUserRepository'
+import type { IMenuRepository } from './interfaces/IMenuRepository'
 
 // To migrate: replace "new SupabaseXxxRepository()" with "new RestXxxRepository()" etc.
 export const customerRepository: ICustomerRepository = new SupabaseCustomerRepository()
 export const serviceRepository: IServiceRepository = new SupabaseServiceRepository()
 export const organizationRepository: IOrganizationRepository =
   new SupabaseOrganizationRepository()
+export const userRepository: IUserRepository = new SupabaseUserRepository()
+export const menuRepository: IMenuRepository = new SupabaseMenuRepository()

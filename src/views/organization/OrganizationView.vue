@@ -5,21 +5,24 @@ import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useOrganization } from '@/composables/useOrganization'
 import { usePermission } from '@/composables/usePermission'
+import { useConfirm } from '@/composables/useConfirm'
 import AdminLayout from '@/components/layout/AdminLayout.vue'
 import PageBreadcrumb from '@/components/common/PageBreadcrumb.vue'
 import ComponentCard from '@/components/common/ComponentCard.vue'
 import Button from '@/components/ui/Button.vue'
-import AppBadge from '@/components/atoms/AppBadge.vue'
 import AppSpinner from '@/components/atoms/AppSpinner.vue'
+import IconButton from '@/components/atoms/IconButton.vue'
 import SummaryCard from '@/components/organisms/SummaryCard.vue'
 import TrendChart from '@/components/organisms/TrendChart.vue'
 import OrgTree from '@/components/organisms/OrgTree.vue'
+import { Activity, Briefcase, Building2, CheckCircle2, Pencil } from 'lucide-vue-next'
 import type { OrgTreeNode, OrganizationUnitType } from '@/types/organization.types'
 
 const router = useRouter()
 const { profile, tree, loading, stats, fetchProfile, fetchTree, fetchStats, toggleUnitActive, deleteUnit } =
   useOrganization()
 const { can } = usePermission()
+const { confirm } = useConfirm()
 
 const canWrite = computed(() => can('create', 'organization') || can('update', 'organization'))
 // Mirrors the DB gate: company_profile UPDATE is admin-only per RLS.
@@ -98,9 +101,13 @@ const profileAddressLine = computed(() => {
 
 async function handleDeleteUnit(id: string) {
   if (!can('delete', 'organization')) return
-  const confirmed = window.confirm(
-    'Delete this unit? Units that still have child units or positions cannot be deleted — move or remove them first.',
-  )
+  const confirmed = await confirm({
+    title: 'Delete Unit',
+    message:
+      'Units that still have child units or positions cannot be deleted — move or remove them first.',
+    confirmText: 'Delete',
+    tone: 'danger',
+  })
   if (!confirmed) return
   const ok = await deleteUnit(id)
   if (ok) {
@@ -163,15 +170,15 @@ async function handleDeleteUnit(id: string) {
               </dl>
             </div>
           </div>
-          <Button
+          <IconButton
             v-if="canUpdateProfile"
-            variant="outline"
-            size="sm"
+            :icon="Pencil"
+            tooltip="Edit Company Profile"
+            tone="brand"
+            size="md"
             class-name="shrink-0"
             @click="goToEditProfile"
-          >
-            Edit Profile
-          </Button>
+          />
         </div>
 
         <div v-else class="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -184,10 +191,10 @@ async function handleDeleteUnit(id: string) {
         <SummaryCard
           title="Organization Summary"
           :items="[
-            { label: 'Total Units', value: stats?.totalUnits ?? 0 },
-            { label: 'Active Units', value: stats?.activeUnits ?? 0 },
-            { label: 'Total Positions', value: stats?.totalPositions ?? 0 },
-            { label: 'Active Positions', value: stats?.activePositions ?? 0 },
+            { label: 'Total Units', value: stats?.totalUnits ?? 0, icon: Building2, tone: 'brand' },
+            { label: 'Active Units', value: stats?.activeUnits ?? 0, icon: CheckCircle2, tone: 'success' },
+            { label: 'Total Positions', value: stats?.totalPositions ?? 0, icon: Briefcase, tone: 'warning' },
+            { label: 'Active Positions', value: stats?.activePositions ?? 0, icon: Activity, tone: 'neutral' },
           ]"
         />
         <TrendChart

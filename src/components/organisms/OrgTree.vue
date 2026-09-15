@@ -4,7 +4,8 @@
 import { ref } from 'vue'
 import type { OrgTreeNode } from '@/types/organization.types'
 import AppBadge from '@/components/atoms/AppBadge.vue'
-import Button from '@/components/ui/Button.vue'
+import IconButton from '@/components/atoms/IconButton.vue'
+import { Plus, Pencil, Power, Trash2 } from 'lucide-vue-next'
 
 defineOptions({ name: 'OrgTree' })
 
@@ -106,24 +107,21 @@ function typeLabel(type: string): string {
         </AppBadge>
 
         <span v-if="canWrite" class="flex items-center gap-1" @click.stop>
-          <Button variant="outline" size="sm" @click="emit('add-child', node.id)">+ Child</Button>
-          <Button variant="outline" size="sm" @click="emit('edit', node.id)">Edit</Button>
-          <Button
-            variant="outline"
-            size="sm"
+          <IconButton :icon="Plus" tooltip="Add Child Unit" tone="neutral" @click="emit('add-child', node.id)" />
+          <IconButton :icon="Pencil" tooltip="Edit Unit" tone="brand" @click="emit('edit', node.id)" />
+          <IconButton
+            :icon="Power"
+            :tooltip="node.isActive ? 'Deactivate Unit' : 'Activate Unit'"
+            :tone="node.isActive ? 'warning' : 'success'"
             @click="emit('toggle-active', node.id, !node.isActive)"
-          >
-            {{ node.isActive ? 'Deactivate' : 'Activate' }}
-          </Button>
-          <Button
+          />
+          <IconButton
             v-if="canDelete"
-            variant="outline"
-            size="sm"
-            class-name="text-red-500 border-red-200 hover:bg-red-50 dark:border-red-500/30 dark:hover:bg-red-500/10"
+            :icon="Trash2"
+            tooltip="Delete Unit"
+            tone="danger"
             @click="emit('delete', node.id)"
-          >
-            Delete
-          </Button>
+          />
         </span>
       </div>
 

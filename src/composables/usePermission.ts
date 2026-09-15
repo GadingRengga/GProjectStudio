@@ -14,8 +14,12 @@ type Resource =
   | 'transactions'
   | 'organization'
   | 'company_profile'
+  | 'users'
 
 // Define what each role can do
+// NOTE: PERMISSIONS is typed Record<string, Record<Resource, Action[]>> — every
+// role MUST list every resource, so adding a resource here means adding the key
+// to all three roles (an empty array for "no access").
 const PERMISSIONS: Record<string, Record<Resource, Action[]>> = {
   admin: {
     customers: ['create', 'read', 'update', 'delete'],
@@ -26,6 +30,11 @@ const PERMISSIONS: Record<string, Record<Resource, Action[]>> = {
     transactions: ['create', 'read', 'update', 'delete'],
     organization: ['create', 'read', 'update', 'delete'],
     company_profile: ['read', 'update'],
+    // 'create' is reserved for Phase 2 (creating a user needs the service_role key
+    // and therefore an Edge Function). Today it only opens the "how to add a user"
+    // guidance page, so the permission set does not change when Phase 2 lands.
+    // 'delete' means "revoke access" — deleting the user_roles row.
+    users: ['create', 'read', 'update', 'delete'],
   },
   staff: {
     customers: ['create', 'read', 'update'],
@@ -36,6 +45,7 @@ const PERMISSIONS: Record<string, Record<Resource, Action[]>> = {
     transactions: ['read'],
     organization: ['create', 'read', 'update'],
     company_profile: ['read'],
+    users: [],
   },
   viewer: {
     customers: ['read'],
@@ -46,6 +56,7 @@ const PERMISSIONS: Record<string, Record<Resource, Action[]>> = {
     transactions: [],
     organization: ['read'],
     company_profile: ['read'],
+    users: [],
   },
 }
 

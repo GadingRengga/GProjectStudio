@@ -5,6 +5,7 @@ import { dashboardRoutes } from './routes/dashboard.routes'
 import { customerRoutes } from './routes/customer.routes'
 import { serviceRoutes } from './routes/service.routes'
 import { organizationRoutes } from './routes/organization.routes'
+import { userRoutes } from './routes/user.routes'
 import { demoRoutes } from './routes/demo.routes'
 
 const router = createRouter({
@@ -18,6 +19,7 @@ const router = createRouter({
     ...customerRoutes,
     ...serviceRoutes,
     ...organizationRoutes,
+    ...userRoutes,
     ...demoRoutes,
     {
       path: '/:pathMatch(.*)*',

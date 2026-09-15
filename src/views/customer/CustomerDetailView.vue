@@ -10,12 +10,15 @@ import PageBreadcrumb from '@/components/common/PageBreadcrumb.vue'
 import ComponentCard from '@/components/common/ComponentCard.vue'
 import AppBadge from '@/components/atoms/AppBadge.vue'
 import AppSpinner from '@/components/atoms/AppSpinner.vue'
-import Button from '@/components/ui/Button.vue'
+import IconButton from '@/components/atoms/IconButton.vue'
+import Alert from '@/components/ui/Alert.vue'
+import DetailField from '@/components/molecules/DetailField.vue'
+import { Building2, Pencil } from 'lucide-vue-next'
 import { formatDatetime } from '@/utils/date'
 
 const route = useRoute()
 const router = useRouter()
-const { currentCustomer, loading, fetchCustomerById } = useCustomer()
+const { currentCustomer, loading, error, fetchCustomerById } = useCustomer()
 const { can } = usePermission()
 
 const customerId = computed(() => route.params.id as string)
@@ -60,6 +63,13 @@ function goToEdit() {
     <PageBreadcrumb :pageTitle="'Customer Detail'" />
 
     <div class="space-y-5 sm:space-y-6">
+      <Alert
+        v-if="error && !loading"
+        variant="error"
+        title="Failed to load customer"
+        :message="error"
+      />
+
       <ComponentCard title="Customer Detail">
         <div v-if="loading" class="flex justify-center py-16">
           <AppSpinner size="lg" />
@@ -72,100 +82,70 @@ function goToEdit() {
 
         <div v-else>
           <div class="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p class="text-xs font-medium tracking-wide text-gray-400 uppercase">
-                {{ currentCustomer.code }}
-              </p>
-              <h3 class="mt-1 text-lg font-semibold text-gray-800 dark:text-white/90 lg:text-2xl">
-                {{ currentCustomer.name }}
-              </h3>
-              <div class="mt-3 flex items-center gap-2">
-                <AppBadge :variant="typeBadgeVariant">
-                  {{ typeLabel }}
-                </AppBadge>
-                <AppBadge :variant="currentCustomer.isActive ? 'success' : 'danger'">
-                  {{ currentCustomer.isActive ? 'Active' : 'Inactive' }}
-                </AppBadge>
+            <div class="flex items-start gap-4">
+              <div
+                class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-500 dark:bg-brand-500/10"
+              >
+                <Building2 class="h-7 w-7" />
+              </div>
+              <div>
+                <p class="text-xs font-medium tracking-wide text-gray-400 uppercase">
+                  {{ currentCustomer.code }}
+                </p>
+                <h3 class="mt-1 text-lg font-semibold text-gray-800 dark:text-white/90 lg:text-2xl">
+                  {{ currentCustomer.name }}
+                </h3>
+                <div class="mt-3 flex items-center gap-2">
+                  <AppBadge :variant="typeBadgeVariant">
+                    {{ typeLabel }}
+                  </AppBadge>
+                  <AppBadge :variant="currentCustomer.isActive ? 'success' : 'danger'">
+                    {{ currentCustomer.isActive ? 'Active' : 'Inactive' }}
+                  </AppBadge>
+                </div>
               </div>
             </div>
-            <Button
+            <IconButton
               v-if="canUpdate"
-              variant="outline"
-              size="sm"
+              :icon="Pencil"
+              tooltip="Edit Customer"
+              tone="brand"
+              size="md"
               @click="goToEdit"
-            >
-              Edit
-            </Button>
+            />
           </div>
 
           <div class="mt-6 border-t border-gray-100 pt-6 dark:border-gray-800">
-            <dl class="grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-2">
-              <div>
-                <dt class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Email</dt>
-                <dd class="mt-1 text-gray-800 text-theme-sm dark:text-white/90">
-                  {{ currentCustomer.email ?? '-' }}
-                </dd>
-              </div>
-              <div>
-                <dt class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Phone</dt>
-                <dd class="mt-1 text-gray-800 text-theme-sm dark:text-white/90">
-                  {{ currentCustomer.phone ?? '-' }}
-                </dd>
-              </div>
-              <div class="sm:col-span-2">
-                <dt class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Street</dt>
-                <dd class="mt-1 text-gray-800 text-theme-sm dark:text-white/90">
-                  {{ currentCustomer.address ?? '-' }}
-                </dd>
-              </div>
-              <div>
-                <dt class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Village</dt>
-                <dd class="mt-1 text-gray-800 text-theme-sm dark:text-white/90">
-                  {{ currentCustomer.village ?? '-' }}
-                </dd>
-              </div>
-              <div>
-                <dt class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">District</dt>
-                <dd class="mt-1 text-gray-800 text-theme-sm dark:text-white/90">
-                  {{ currentCustomer.district ?? '-' }}
-                </dd>
-              </div>
-              <div>
-                <dt class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Regency / City</dt>
-                <dd class="mt-1 text-gray-800 text-theme-sm dark:text-white/90">
-                  {{ currentCustomer.regency ?? '-' }}
-                </dd>
-              </div>
-              <div>
-                <dt class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Province</dt>
-                <dd class="mt-1 text-gray-800 text-theme-sm dark:text-white/90">
-                  {{ currentCustomer.province ?? '-' }}
-                </dd>
-              </div>
-              <div>
-                <dt class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Postal Code</dt>
-                <dd class="mt-1 text-gray-800 text-theme-sm dark:text-white/90">
-                  {{ currentCustomer.postalCode ?? '-' }}
-                </dd>
-              </div>
-              <div>
-                <dt class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Country</dt>
-                <dd class="mt-1 text-gray-800 text-theme-sm dark:text-white/90">
-                  {{ currentCustomer.country ?? '-' }}
-                </dd>
-              </div>
-              <div>
-                <dt class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Created</dt>
-                <dd class="mt-1 text-gray-800 text-theme-sm dark:text-white/90">
-                  {{ formatDatetime(currentCustomer.createdAt) }}
-                </dd>
-              </div>
-              <div>
-                <dt class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Updated</dt>
-                <dd class="mt-1 text-gray-800 text-theme-sm dark:text-white/90">
-                  {{ formatDatetime(currentCustomer.updatedAt) }}
-                </dd>
-              </div>
+            <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+              <section
+                class="rounded-xl border border-gray-100 bg-gray-50/60 p-4 dark:border-gray-800 dark:bg-white/[0.02] sm:p-5"
+              >
+                <h4 class="text-sm font-semibold text-gray-800 dark:text-white/90">Contact Information</h4>
+                <dl class="mt-4 grid grid-cols-1 gap-x-6 gap-y-4 text-sm">
+                  <DetailField label="Email">{{ currentCustomer.email ?? '-' }}</DetailField>
+                  <DetailField label="Phone">{{ currentCustomer.phone ?? '-' }}</DetailField>
+                  <DetailField label="Country">{{ currentCustomer.country ?? '-' }}</DetailField>
+                  <DetailField label="Postal Code">{{ currentCustomer.postalCode ?? '-' }}</DetailField>
+                </dl>
+              </section>
+
+              <section
+                class="rounded-xl border border-gray-100 bg-gray-50/60 p-4 dark:border-gray-800 dark:bg-white/[0.02] sm:p-5"
+              >
+                <h4 class="text-sm font-semibold text-gray-800 dark:text-white/90">Address</h4>
+                <dl class="mt-4 grid grid-cols-1 gap-x-6 gap-y-4 text-sm">
+                  <DetailField label="Street" wide>{{ currentCustomer.address ?? '-' }}</DetailField>
+                  <DetailField label="Village">{{ currentCustomer.village ?? '-' }}</DetailField>
+                  <DetailField label="District">{{ currentCustomer.district ?? '-' }}</DetailField>
+                  <DetailField label="Regency / City">{{ currentCustomer.regency ?? '-' }}</DetailField>
+                  <DetailField label="Province">{{ currentCustomer.province ?? '-' }}</DetailField>
+                </dl>
+              </section>
+            </div>
+
+            <dl class="mt-5 grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-2">
+              <DetailField label="Created">{{ formatDatetime(currentCustomer.createdAt) }}</DetailField>
+              <DetailField label="Updated">{{ formatDatetime(currentCustomer.updatedAt) }}</DetailField>
             </dl>
           </div>
         </div>

@@ -5,6 +5,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useOrganization } from '@/composables/useOrganization'
 import { usePermission } from '@/composables/usePermission'
+import { useConfirm } from '@/composables/useConfirm'
 import AdminLayout from '@/components/layout/AdminLayout.vue'
 import PageBreadcrumb from '@/components/common/PageBreadcrumb.vue'
 import ComponentCard from '@/components/common/ComponentCard.vue'
@@ -12,6 +13,11 @@ import FormField from '@/components/molecules/FormField.vue'
 import Button from '@/components/ui/Button.vue'
 import AppBadge from '@/components/atoms/AppBadge.vue'
 import AppSpinner from '@/components/atoms/AppSpinner.vue'
+import IconButton from '@/components/atoms/IconButton.vue'
+import Alert from '@/components/ui/Alert.vue'
+import DetailField from '@/components/molecules/DetailField.vue'
+import { Pencil, Power, Trash2 } from 'lucide-vue-next'
+import { PlusIcon } from '@/icons'
 import type { OrganizationUnitType, Position, PositionLevel } from '@/types/organization.types'
 import { formatDatetime } from '@/utils/date'
 import { isRequired } from '@/utils/validators'
@@ -23,6 +29,7 @@ const {
   childUnits,
   positions,
   loading,
+  error,
   fetchUnitById,
   fetchChildUnits,
   deleteUnit,
@@ -33,6 +40,7 @@ const {
   deletePosition,
 } = useOrganization()
 const { can } = usePermission()
+const { confirm } = useConfirm()
 
 const unitId = computed(() => route.params.id as string)
 const canCreate = computed(() => can('create', 'organization'))
@@ -154,29 +162,38 @@ async function handleSavePosition() {
 
 // ---- Unit actions ---------------------------------------------------------
 async function handleToggleUnitActive() {
-  if (!canUpdate || !currentUnit.value) return
+  if (!canUpdate.value || !currentUnit.value) return
   await toggleUnitActive(unitId.value, !currentUnit.value.isActive)
 }
 
 async function handleDeleteUnit() {
-  if (!canDelete) return
-  const confirmed = window.confirm(
-    'Delete this unit? Units that still have child units or positions cannot be deleted — move or remove them first.',
-  )
+  if (!canDelete.value) return
+  const confirmed = await confirm({
+    title: 'Delete Unit',
+    message:
+      'Units that still have child units or positions cannot be deleted — move or remove them first.',
+    confirmText: 'Delete',
+    tone: 'danger',
+  })
   if (!confirmed) return
   const ok = await deleteUnit(unitId.value)
   if (ok) router.push({ name: 'organization-overview' })
 }
 
 async function handleDeletePosition(id: string) {
-  if (!canDelete) return
-  const confirmed = window.confirm('Delete this position? This action cannot be undone.')
+  if (!canDelete.value) return
+  const confirmed = await confirm({
+    title: 'Delete Position',
+    message: 'This position will be permanently removed. This action cannot be undone.',
+    confirmText: 'Delete',
+    tone: 'danger',
+  })
   if (!confirmed) return
   await deletePosition(id)
 }
 
 async function handleTogglePosition(p: Position) {
-  if (!canUpdate) return
+  if (!canUpdate.value) return
   await togglePositionActive(p.id, !p.isActive)
 }
 
@@ -198,6 +215,13 @@ function goToParent() {
     <PageBreadcrumb :pageTitle="'Unit Detail'" />
 
     <div class="space-y-5 sm:space-y-6">
+      <Alert
+        v-if="error"
+        variant="error"
+        title="Organization action failed"
+        :message="error"
+      />
+
       <!-- Unit header -->
       <ComponentCard title="Organization Unit">
         <div v-if="loading" class="flex justify-center py-16">
@@ -228,19 +252,30 @@ function goToParent() {
               </div>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-              <Button v-if="canUpdate" variant="outline" size="sm" @click="goToEdit">Edit</Button>
-              <Button v-if="canUpdate" variant="outline" size="sm" @click="handleToggleUnitActive">
-                {{ currentUnit.isActive ? 'Deactivate' : 'Activate' }}
-              </Button>
-              <Button
-                v-if="canDelete"
-                variant="outline"
-                size="sm"
-                class-name="text-red-500 border-red-200 hover:bg-red-50 dark:border-red-500/30 dark:hover:bg-red-500/10"
-                @click="handleDeleteUnit"
-              >
-                Delete
-              </Button>
+              <IconButton
+            v-if="canUpdate"
+            :icon="Pencil"
+            tooltip="Edit Unit"
+            tone="brand"
+            size="md"
+            @click="goToEdit"
+          />
+          <IconButton
+            v-if="canUpdate"
+            :icon="Power"
+            :tooltip="currentUnit.isActive ? 'Deactivate Unit' : 'Activate Unit'"
+            :tone="currentUnit.isActive ? 'warning' : 'success'"
+            size="md"
+            @click="handleToggleUnitActive"
+          />
+          <IconButton
+            v-if="canDelete"
+            :icon="Trash2"
+            tooltip="Delete Unit"
+            tone="danger"
+            size="md"
+            @click="handleDeleteUnit"
+          />
             </div>
           </div>
         </div>
@@ -249,36 +284,21 @@ function goToParent() {
       <!-- Unit info -->
       <ComponentCard v-if="currentUnit" title="Unit Information">
         <dl class="grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-2">
-          <div>
-            <dt class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Parent Unit</dt>
-            <dd class="mt-1">
-              <button
-                type="button"
-                class="text-brand-500 hover:underline"
-                @click="goToParent"
-              >
-                {{ currentUnit.parentId ? 'Go to parent unit' : 'None (root unit)' }}
-              </button>
-            </dd>
-          </div>
-          <div>
-            <dt class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Sort Order</dt>
-            <dd class="mt-1 text-gray-800 text-theme-sm dark:text-white/90">{{ currentUnit.sortOrder }}</dd>
-          </div>
-          <div class="sm:col-span-2">
-            <dt class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Description</dt>
-            <dd class="mt-1 whitespace-pre-line text-gray-800 text-theme-sm dark:text-white/90">
-              {{ currentUnit.description || '-' }}
-            </dd>
-          </div>
-          <div>
-            <dt class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Created</dt>
-            <dd class="mt-1 text-gray-800 text-theme-sm dark:text-white/90">{{ formatDatetime(currentUnit.createdAt) }}</dd>
-          </div>
-          <div>
-            <dt class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Updated</dt>
-            <dd class="mt-1 text-gray-800 text-theme-sm dark:text-white/90">{{ formatDatetime(currentUnit.updatedAt) }}</dd>
-          </div>
+          <DetailField label="Parent Unit">
+            <button
+              type="button"
+              class="text-brand-500 hover:underline"
+              @click="goToParent"
+            >
+              {{ currentUnit.parentId ? 'Go to parent unit' : 'None (root unit)' }}
+            </button>
+          </DetailField>
+          <DetailField label="Sort Order">{{ currentUnit.sortOrder }}</DetailField>
+          <DetailField label="Description" wide>
+            <span class="whitespace-pre-line font-normal">{{ currentUnit.description || '-' }}</span>
+          </DetailField>
+          <DetailField label="Created">{{ formatDatetime(currentUnit.createdAt) }}</DetailField>
+          <DetailField label="Updated">{{ formatDatetime(currentUnit.updatedAt) }}</DetailField>
         </dl>
       </ComponentCard>
       <!-- Positions -->
@@ -288,8 +308,8 @@ function goToParent() {
         desc="Job positions under this unit. Future employees will attach to a position here."
       >
         <div class="flex justify-end">
-          <Button v-if="canCreate && !showPositionForm" variant="primary" size="sm" @click="openCreatePosition">
-            + Add Position
+          <Button v-if="canCreate && !showPositionForm" variant="primary" size="sm" :start-icon="PlusIcon" @click="openCreatePosition">
+            Add Position
           </Button>
         </div>
 
@@ -374,19 +394,21 @@ function goToParent() {
                 </td>
                 <td class="px-5 py-4 sm:px-6" @click.stop>
                   <div class="flex items-center justify-end gap-2">
-                    <Button v-if="canUpdate" variant="outline" size="sm" @click="openEditPosition(p)">Edit</Button>
-                    <Button v-if="canUpdate" variant="outline" size="sm" @click="handleTogglePosition(p)">
-                      {{ p.isActive ? 'Deactivate' : 'Activate' }}
-                    </Button>
-                    <Button
+                    <IconButton v-if="canUpdate" :icon="Pencil" tooltip="Edit Position" tone="brand" @click="openEditPosition(p)" />
+                    <IconButton
+                      v-if="canUpdate"
+                      :icon="Power"
+                      :tooltip="p.isActive ? 'Deactivate Position' : 'Activate Position'"
+                      :tone="p.isActive ? 'warning' : 'success'"
+                      @click="handleTogglePosition(p)"
+                    />
+                    <IconButton
                       v-if="canDelete"
-                      variant="outline"
-                      size="sm"
-                      class-name="text-red-500 border-red-200 hover:bg-red-50 dark:border-red-500/30 dark:hover:bg-red-500/10"
+                      :icon="Trash2"
+                      tooltip="Delete Position"
+                      tone="danger"
                       @click="handleDeletePosition(p.id)"
-                    >
-                      Delete
-                    </Button>
+                    />
                   </div>
                 </td>
               </tr>

@@ -7,14 +7,19 @@ import { useRouter } from 'vue-router'
 import { useCustomer } from '@/composables/useCustomer'
 import { usePagination } from '@/composables/usePagination'
 import { usePermission } from '@/composables/usePermission'
+import { useConfirm } from '@/composables/useConfirm'
 import AdminLayout from '@/components/layout/AdminLayout.vue'
 import PageBreadcrumb from '@/components/common/PageBreadcrumb.vue'
 import ComponentCard from '@/components/common/ComponentCard.vue'
 import DataTable from '@/components/organisms/DataTable/DataTable.vue'
 import Button from '@/components/ui/Button.vue'
 import AppBadge from '@/components/atoms/AppBadge.vue'
+import IconButton from '@/components/atoms/IconButton.vue'
+import Alert from '@/components/ui/Alert.vue'
 import SummaryCard from '@/components/organisms/SummaryCard.vue'
 import TrendChart from '@/components/organisms/TrendChart.vue'
+import { PlusIcon } from '@/icons'
+import { Building2, Trash2, UserCheck, UserPlus, Users } from 'lucide-vue-next'
 import type { Customer } from '@/types/customer.types'
 import { formatDatetime } from '@/utils/date'
 
@@ -22,6 +27,7 @@ const router = useRouter()
 const {
   customers,
   loading,
+  error,
   pagination,
   stats,
   trend,
@@ -30,6 +36,7 @@ const {
   deleteCustomer,
   fetchCustomerStats,
 } = useCustomer()
+const { confirm } = useConfirm()
 const { params, setPage, setSearch, setSort, sortBy, sortDir } = usePagination({ page: 1, perPage: 15 })
 const { can } = usePermission()
 
@@ -96,7 +103,12 @@ function typeLabel(type: Customer['type']): string {
 
 async function handleDelete(id: string) {
   if (!can('delete', 'customers')) return
-  const confirmed = window.confirm('Delete this customer? This action cannot be undone.')
+  const confirmed = await confirm({
+    title: 'Delete Customer',
+    message: 'This customer will be permanently removed, along with the data attached to it. This action cannot be undone.',
+    confirmText: 'Delete',
+    tone: 'danger',
+  })
   if (!confirmed) return
   const ok = await deleteCustomer(id)
   if (ok) load()
@@ -112,10 +124,10 @@ async function handleDelete(id: string) {
         <SummaryCard
           title="Customer Summary"
           :items="[
-            { label: 'Total Customers', value: statsLoading ? '…' : (stats?.total ?? 0) },
-            { label: 'Active', value: statsLoading ? '…' : (stats?.active ?? 0) },
-            { label: 'New This Month', value: statsLoading ? '…' : (stats?.newThisMonth ?? 0) },
-            { label: 'Companies', value: statsLoading ? '…' : (stats?.companies ?? 0) },
+            { label: 'Total Customers', value: statsLoading ? '…' : (stats?.total ?? 0), icon: Users, tone: 'brand' },
+            { label: 'Active', value: statsLoading ? '…' : (stats?.active ?? 0), icon: UserCheck, tone: 'success' },
+            { label: 'New This Month', value: statsLoading ? '…' : (stats?.newThisMonth ?? 0), icon: UserPlus, tone: 'warning' },
+            { label: 'Companies', value: statsLoading ? '…' : (stats?.companies ?? 0), icon: Building2, tone: 'neutral' },
           ]"
         />
 
@@ -137,11 +149,20 @@ async function handleDelete(id: string) {
             v-if="can('create', 'customers')"
             variant="primary"
             size="sm"
+            :start-icon="PlusIcon"
             @click="goToCreate"
           >
-            + Add Customer
+            Add Customer
           </Button>
         </div>
+
+        <Alert
+          v-if="error"
+          variant="error"
+          title="Failed to load customers"
+          :message="error"
+          class="mb-5"
+        />
 
         <DataTable
           :data="customers as unknown as Record<string, unknown>[]"
@@ -211,16 +232,16 @@ async function handleDelete(id: string) {
               </p>
             </td>
             <td class="px-5 py-4 text-right sm:px-6" @click.stop>
-              <Button
-                v-if="can('delete', 'customers')"
-                variant="outline"
-                size="sm"
-                class-name="text-red-500 border-red-200 hover:bg-red-50 dark:border-red-500/30 dark:hover:bg-red-500/10"
-                @click="handleDelete((row as unknown as Customer).id)"
-              >
-                Delete
-              </Button>
-              <span v-else class="text-xs text-gray-300">—</span>
+              <div class="flex items-center justify-end">
+                <IconButton
+                  v-if="can('delete', 'customers')"
+                  :icon="Trash2"
+                  tooltip="Delete Customer"
+                  tone="danger"
+                  @click="handleDelete((row as unknown as Customer).id)"
+                />
+                <span v-else class="text-xs text-gray-300">—</span>
+              </div>
             </td>
           </template>
         </DataTable>
